@@ -42,7 +42,7 @@ def get_cache(config: Config):
 
 
 @csp_billing_adapter.hookimpl(trylast=True)
-def update_cache(config: Config, cache: dict, replace: bool = False):
+def update_cache(config: Config, cache: dict, replace: bool):
     if not replace:
         cache = {**get_cache(config), **cache}
 
@@ -62,7 +62,7 @@ def get_csp_config(config: Config):
 
 
 @csp_billing_adapter.hookimpl(trylast=True)
-def update_csp_config(config: Config, csp_config: Config, replace: bool = False):
+def update_csp_config(config: Config, csp_config: Config, replace: bool):
     if not replace:
         csp_config = {**get_csp_config(config), **csp_config}
 

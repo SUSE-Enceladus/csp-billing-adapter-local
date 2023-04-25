@@ -1,2 +1,2 @@
-csp-billing-adapter
+csp-billing-adapter @ git+https://github.com/suse-enceladus/csp-billing-adapter@main
 pluggy

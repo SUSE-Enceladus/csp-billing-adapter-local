@@ -30,15 +30,14 @@ from csp_billing_adapter.config import Config
 
 log = logging.getLogger('CSPBillingAdapter')
 
-LOCAL_DIR = '.local'
-PRODUCT_DIR = 'csp-billing-adapter'
+ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
 CACHE_FILE = 'cache.json'
 CSP_CONFIG_FILE = 'csp-config.json'
 
 
 def get_local_path(filename):
     """Return the requested data file path"""
-    local_storage_path = Path.home().joinpath(LOCAL_DIR, PRODUCT_DIR)
+    local_storage_path = Path(ADAPTER_DATA_DIR)
     if not local_storage_path.exists():
         local_storage_path.mkdir(parents=True, exist_ok=True)
     local_storage_path.joinpath(filename)

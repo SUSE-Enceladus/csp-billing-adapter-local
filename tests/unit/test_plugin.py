@@ -87,7 +87,7 @@ def test_local_cache_update_merge():
         ):
             test_data1 = {'a': 1, 'b': 2}
             test_data2 = {'a': 10, 'c': 12}
-            test_data3 = test_data1 | test_data2
+            test_data3 = {**test_data1, **test_data2}
 
             # local cache should initially be empty
             assert get_cache(config=local_config) == {}
@@ -211,7 +211,7 @@ def test_local_csp_config_update_merge():
         ):
             test_data1 = {'a': 1, 'b': 2}
             test_data2 = {'a': 10, 'c': 12}
-            test_data3 = test_data1 | test_data2
+            test_data3 = {**test_data1, **test_data2}
 
             # local csp_config should initially be empty
             assert get_csp_config(config=local_config) == {}

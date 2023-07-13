@@ -20,6 +20,8 @@ plugin
 
 import json
 import logging
+import urllib.request
+import urllib.error
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
@@ -27,6 +29,7 @@ from pathlib import Path
 import csp_billing_adapter
 
 from csp_billing_adapter.config import Config
+from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 log = logging.getLogger('CSPBillingAdapter')
 
@@ -111,3 +114,89 @@ def save_csp_config(
 ):
     """Save specified content as local storage csp_config contents."""
     update_csp_config(config, csp_config, replace=True)
+
+
+@csp_billing_adapter.hookimpl(trylast=True)
+def get_usage_data(config: Config):
+    """
+    Retrieves the current usage report from the application API
+
+    :param config: The application configuration dictionary
+    :return: Return a dict with the current usage report
+    """
+    usage_data = _make_request(config.get('api'))
+    usage_data_list_name = ''.join(list(usage_data.keys()))
+
+    if (
+        'usage_metrics' in usage_data_list_name and
+        usage_data_list_name in config
+    ):
+        return _extract_usage(
+            usage_data[usage_data_list_name],
+            config[usage_data_list_name]
+        )
+    if 'usage_metrics' not in config:
+        raise CSPBillingAdapterException(
+            'Config missing usage metrics section'
+        )
+    raise CSPBillingAdapterException('Unrecognized application API response')
+
+
+def _extract_usage(
+    api_usage_metrics: list,
+    config_usage_metrics: dict
+):
+    """
+    Parse the response from the application API to the expected structure.
+    """
+    usage_metrics = {}
+    missing_metrics = []
+    for usage_metric_info in api_usage_metrics:
+        usage_metric_name = usage_metric_info.get('usage_metric')
+        if usage_metric_name not in config_usage_metrics:
+            missing_metrics.append(usage_metric_name)
+        try:
+            usage_metrics[usage_metric_name] = usage_metric_info['count']
+        except KeyError:
+            log.warning('Missing "count" info in the application API response')
+            usage_metrics[usage_metric_name] = 0
+
+    if missing_metrics:
+        message = f"Usage metric(s) {', '.join(missing_metrics)} not in config"
+        log.error(message)
+        raise CSPBillingAdapterException(message)
+
+    if not usage_metrics:
+        raise CSPBillingAdapterException(
+            'Unexpected application API usage metrics name '
+            'in the usage data response'
+        )
+
+    return usage_metrics
+
+
+def _make_request(url: str):
+    """
+    Make a request to the application API
+    returns response or raise exception.
+    """
+    request = urllib.request.Request(url)
+    for attempt in range(0, 5):
+        message = None
+        try:
+            with urllib.request.urlopen(request) as f:
+                response = f.read().decode()
+        except urllib.error.URLError as err:
+            message = f'Error making the request to {url}: {err.reason}'
+
+        if not message:
+            break
+
+    if message:
+        raise CSPBillingAdapterException(message)
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError as err:
+        raise CSPBillingAdapterException(
+            f'Could not deserialized JSON from application API: {err}'
+        )

@@ -22,12 +22,18 @@
 test_plugin.py is part of csp-billing-adapter-local and provides units tests
 for the local plugin functions.
 """
+import json
+import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
+from pytest import raises
+
+import urllib.error
 
 from csp_billing_adapter.config import Config
 from csp_billing_adapter.adapter import get_plugin_manager
+from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 
 from csp_billing_adapter_local.plugin import (
@@ -36,7 +42,8 @@ from csp_billing_adapter_local.plugin import (
     update_cache,
     update_csp_config,
     save_cache,
-    save_csp_config
+    save_csp_config,
+    get_usage_data
 )
 
 config_file = 'tests/data/config.yaml'
@@ -45,6 +52,13 @@ local_config = Config.load_from_file(
         config_file,
         pm.hook
     )
+json_data = {
+    "usage_metrics": [
+        {"usage_metric": "managed_node_count", "count": 42},
+        {"usage_metric": "monitoring", "count": 99}
+    ]
+}
+json_response = json.dumps(json_data, indent=2).encode('utf-8')
 
 
 def test_local_get_cache():
@@ -295,3 +309,122 @@ def test_local_csp_config_save():
             )
 
             assert get_csp_config(config=local_config) == test_data2
+
+
+def test_local_csp_usage_data():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json_response
+
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            response = get_usage_data(config=local_config)
+            assert response == {'managed_node_count': 42, 'monitoring': 99}
+
+
+def test_local_csp_usage_data_wrong_response():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps({'foo': []}, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with raises(CSPBillingAdapterException):
+                get_usage_data(config=local_config)
+
+
+def test_local_csp_usage_data_different_config_key():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps({'product_code': []}, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with raises(CSPBillingAdapterException):
+                get_usage_data(config=local_config)
+
+
+def test_local_csp_usage_data_no_usage_metrics():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps({'usage_metrics': []}, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with raises(CSPBillingAdapterException):
+                local_config_no_metrics = dict(local_config)
+                del local_config_no_metrics['usage_metrics']
+                get_usage_data(config=local_config_no_metrics)
+
+
+def test_local_csp_usage_data_json_decode_error():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps({'usage_metrics': []}, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with patch(
+                'csp_billing_adapter_local.plugin.json.loads'
+            ) as mock_json_loads:
+                mock_json_loads.side_effect = json.JSONDecodeError(
+                    'error', '\n\n', 1
+                )
+                with raises(CSPBillingAdapterException):
+                    get_usage_data(config=local_config)
+
+
+def test_local_csp_usage_data_config_missing_metrics(caplog):
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps(json_data, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with caplog.at_level(logging.INFO, 'CSPBillingAdapter'):
+                with raises(CSPBillingAdapterException):
+                    local_config_missing_metrics = Config.load_from_file(
+                        config_file,
+                        pm.hook
+                    )
+                    del (local_config_missing_metrics['usage_metrics']
+                                                     ['monitoring'])
+                    del (local_config_missing_metrics['usage_metrics']
+                                                     ['managed_node_count'])
+                    get_usage_data(config=local_config_missing_metrics)
+                error_message = "Usage metric(s) managed_node_count, " \
+                    "monitoring not in config"
+                assert error_message in caplog.text
+
+
+def test_local_csp_usage_data_config_missing_count(caplog):
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen'
+    ) as mock_urlopen:
+        json_data_no_count = {
+            "usage_metrics": [
+                {"usage_metric": "managed_node_count", "count": 42},
+                {"usage_metric": "monitoring"}
+            ]
+        }
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = \
+            json.dumps(json_data_no_count, indent=2).encode('utf-8')
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            usage_data = get_usage_data(config=local_config)
+            assert usage_data == {'managed_node_count': 42, 'monitoring': 0}
+            error_message = 'Missing "count" info in the application ' \
+                'API response'
+            assert error_message in caplog.text
+
+
+def test_local_csp_usage_data_errors():
+    with patch(
+        'csp_billing_adapter_local.plugin.urllib.request.urlopen',
+        side_effect=urllib.error.URLError('Unknown host')
+    ) as mock_urlopen:
+        with patch('csp_billing_adapter_local.plugin.urllib.request.Request'):
+            with raises(CSPBillingAdapterException):
+                get_usage_data(config=local_config)
+            # check request is retried 5 times
+            assert mock_urlopen.call_count == 5

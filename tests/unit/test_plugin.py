@@ -31,6 +31,7 @@ from csp_billing_adapter.adapter import get_plugin_manager
 
 
 from csp_billing_adapter_local.plugin import (
+    get_local_path,
     get_cache,
     get_csp_config,
     update_cache,
@@ -45,6 +46,12 @@ local_config = Config.load_from_file(
         config_file,
         pm.hook
     )
+
+
+def test_local_get_local_path():
+    """Test get_local_path(filename) in local plugin"""
+    expected_path = Path('/var/lib/csp-billing-adapter/foo')
+    assert get_local_path('foo') == expected_path
 
 
 def test_local_get_cache():

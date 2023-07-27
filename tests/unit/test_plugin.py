@@ -50,8 +50,12 @@ local_config = Config.load_from_file(
 
 def test_local_get_local_path():
     """Test get_local_path(filename) in local plugin"""
-    expected_path = Path('/var/lib/csp-billing-adapter/foo')
-    assert get_local_path('foo') == expected_path
+    with patch(
+        'csp_billing_adapter_local.plugin.Path',
+        return_value=Path('/etc/')
+    ):
+        expected_path = Path('/etc/foo')
+        assert get_local_path('foo') == expected_path
 
 
 def test_local_get_cache():

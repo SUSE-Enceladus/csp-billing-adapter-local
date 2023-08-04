@@ -26,4 +26,6 @@ usage_metrics:
       min: 1001
     min_consumption: 5
     usage_aggregation: average
+logging:
+  level: 'WARN'
 version: 1.1.1

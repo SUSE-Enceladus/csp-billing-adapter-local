@@ -35,7 +35,7 @@ CACHE_FILE = 'cache.json'
 CSP_CONFIG_FILE = 'csp-config.json'
 
 
-def get_local_path(filename):
+def get_local_path(filename: str):
     """Return the requested data file path"""
     local_storage_path = Path(ADAPTER_DATA_DIR)
     if not local_storage_path.exists():

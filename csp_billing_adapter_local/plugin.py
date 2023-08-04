@@ -40,8 +40,7 @@ def get_local_path(filename: str):
     local_storage_path = Path(ADAPTER_DATA_DIR)
     if not local_storage_path.exists():
         local_storage_path.mkdir(parents=True, exist_ok=True)
-    local_storage_path.joinpath(filename)
-    return local_storage_path
+    return local_storage_path.joinpath(filename)
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

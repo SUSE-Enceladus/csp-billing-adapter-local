@@ -334,4 +334,3 @@ def test_local_csp_setup_adapter_log_without_config_settings(
     setup_adapter(config=Config({}))
 
     log.setLevel.assert_called_with('INFO')
-

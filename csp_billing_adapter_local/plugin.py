@@ -51,8 +51,6 @@ def setup_adapter(config: Config):
     log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
     csp_log = logging.getLogger(LOGGER_NAME)
     csp_log.addHandler(log_to_file)
-    logging_level = config.get('logging', {}).get('level', 'INFO')
-    csp_log.setLevel(logging_level)
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

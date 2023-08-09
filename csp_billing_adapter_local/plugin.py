@@ -127,19 +127,18 @@ def get_usage_data(config: Config):
     usage_data = _make_request(config.get('api'))
     usage_data_list_name = ''.join(list(usage_data.keys()))
 
-    if (
-        'usage_metrics' in usage_data_list_name and
-        usage_data_list_name in config
-    ):
-        return _extract_usage(
-            usage_data[usage_data_list_name],
-            config[usage_data_list_name]
-        )
     if 'usage_metrics' not in config:
         raise CSPBillingAdapterException(
             'Config missing usage metrics section'
         )
-    raise CSPBillingAdapterException('Unrecognized application API response')
+    if 'usage_metrics' not in usage_data_list_name:
+        raise CSPBillingAdapterException(
+            'Unrecognized application API response')
+
+    return _extract_usage(
+        usage_data[usage_data_list_name],
+        config[usage_data_list_name]
+    )
 
 
 def _extract_usage(
@@ -165,12 +164,6 @@ def _extract_usage(
         message = f"Usage metric(s) {', '.join(missing_metrics)} not in config"
         log.error(message)
         raise CSPBillingAdapterException(message)
-
-    if not usage_metrics:
-        raise CSPBillingAdapterException(
-            'Unexpected application API usage metrics name '
-            'in the usage data response'
-        )
 
     return usage_metrics
 

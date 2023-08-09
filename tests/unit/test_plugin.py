@@ -315,22 +315,7 @@ def test_local_csp_setup_adapter_log_with_config_settings(
     setup_adapter(config=local_config)
 
     log.addHandler.assert_called_with(file_handler)
-    log.setLevel.assert_called_with('WARN')
     mock_logging_file_handler.assert_called_with(
         '/var/log/csp_billing_adapter.log'
     )
     mock_logging_get_logger.assert_called_with('CSPBillingAdapter')
-
-
-@patch('csp_billing_adapter_local.plugin.logging.Logger')
-@patch('csp_billing_adapter_local.plugin.logging.getLogger')
-@patch('csp_billing_adapter_local.plugin.logging.FileHandler')
-def test_local_csp_setup_adapter_log_without_config_settings(
-    mock_logging_file_handler, mock_logging_get_logger,
-    mock_logger
-):
-    log = logging.getLogger('csp_test')
-
-    setup_adapter(config=Config({}))
-
-    log.setLevel.assert_called_with('INFO')

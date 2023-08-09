@@ -125,16 +125,17 @@ def get_usage_data(config: Config):
     :return: Return a dict with the current usage report
     """
     usage_data = _make_request(config.get('api'))
+    metrics_key = 'usage_metrics'
 
     try:
-        usage_data_items = usage_data['usage_metrics']
+        usage_data_items = usage_data[metrics_key]
     except KeyError:
         raise CSPBillingAdapterException(
             'Unrecognized application API response'
         )
 
     try:
-        config_usage_metrics_info = config['usage_metrics']
+        config_usage_metrics_info = config[metrics_key]
     except KeyError:
         raise CSPBillingAdapterException(
             'Config missing usage metrics section'

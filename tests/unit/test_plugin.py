@@ -22,6 +22,8 @@
 test_plugin.py is part of csp-billing-adapter-local and provides units tests
 for the local plugin functions.
 """
+import logging
+
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from unittest.mock import patch
@@ -37,7 +39,8 @@ from csp_billing_adapter_local.plugin import (
     update_cache,
     update_csp_config,
     save_cache,
-    save_csp_config
+    save_csp_config,
+    setup_adapter
 )
 
 config_file = 'tests/data/config.yaml'
@@ -306,3 +309,25 @@ def test_local_csp_config_save():
             )
 
             assert get_csp_config(config=local_config) == test_data2
+
+
+@patch('csp_billing_adapter_local.plugin.logging.Logger.info')
+@patch('csp_billing_adapter_local.plugin.logging.Logger.addHandler')
+@patch('csp_billing_adapter_local.plugin.logging.FileHandler')
+def test_local_csp_setup_adapter_log_with_config_settings(
+    mock_logging_file_handler, mock_logger_add_handler,
+    mock_logging_info
+):
+    file_handler = logging.FileHandler('foo')
+    log = logging.getLogger('CSPBillingAdapter')
+    mock_logging_file_handler.return_value = file_handler
+
+    setup_adapter(config=local_config)
+
+    log.addHandler.assert_called_with(file_handler)
+    mock_logging_file_handler.assert_called_with(
+        '/var/log/csp_billing_adapter.log'
+    )
+    mock_logging_info.assert_called_with(
+        'Logger file handler set to /var/log/csp_billing_adapter.log'
+    )

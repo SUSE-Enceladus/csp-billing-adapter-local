@@ -48,8 +48,6 @@ local_config = Config.load_from_file(
         config_file,
         pm.hook
     )
-with open('tests/data/good/csp_config.json', 'r', encoding='utf-8') as f:
-    content = f.read()
 
 
 def test_local_get_cache():

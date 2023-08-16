@@ -49,8 +49,8 @@ def get_local_path(filename):
 @csp_billing_adapter.hookimpl
 def setup_adapter(config: Config):
     log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
-    csp_log = logging.getLogger(LOGGER_NAME)
-    csp_log.addHandler(log_to_file)
+    log.addHandler(log_to_file)
+    log.info(f'Logger file handler set to {CSP_LOG_FILEPATH}')
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

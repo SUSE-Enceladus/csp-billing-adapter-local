@@ -26,6 +26,11 @@ usage_metrics:
       min: 1001
     min_consumption: 5
     usage_aggregation: average
+  monitoring:
+    usage_aggregation: maximum
+    consumption_reporting: volume
+    dimensions:
+    - dimension: monitoring
 logging:
   level: WARN
 version: 1.1.1

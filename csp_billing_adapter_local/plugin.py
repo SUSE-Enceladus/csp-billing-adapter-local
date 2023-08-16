@@ -31,20 +31,28 @@ import csp_billing_adapter
 from csp_billing_adapter.config import Config
 from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
-log = logging.getLogger('CSPBillingAdapter')
-
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
 CACHE_FILE = 'cache.json'
 CSP_CONFIG_FILE = 'csp-config.json'
+CSP_LOG_FILEPATH = '/var/log/csp_billing_adapter.log'
+LOGGER_NAME = 'CSPBillingAdapter'
+
+log = logging.getLogger(LOGGER_NAME)
 
 
-def get_local_path(filename):
+def get_local_path(filename: str):
     """Return the requested data file path"""
     local_storage_path = Path(ADAPTER_DATA_DIR)
     if not local_storage_path.exists():
         local_storage_path.mkdir(parents=True, exist_ok=True)
-    local_storage_path.joinpath(filename)
-    return local_storage_path
+    return local_storage_path.joinpath(filename)
+
+
+@csp_billing_adapter.hookimpl
+def setup_adapter(config: Config):
+    log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
+    log.addHandler(log_to_file)
+    log.info(f'Logger file handler set to {CSP_LOG_FILEPATH}')
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

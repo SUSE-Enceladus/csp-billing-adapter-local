@@ -37,13 +37,15 @@ from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 
 from csp_billing_adapter_local.plugin import (
+    get_local_path,
     get_cache,
     get_csp_config,
     update_cache,
     update_csp_config,
     save_cache,
     save_csp_config,
-    get_usage_data
+    get_usage_data,
+    setup_adapter
 )
 
 config_file = 'tests/data/config.yaml'
@@ -59,6 +61,16 @@ json_data = {
     ]
 }
 json_response = json.dumps(json_data, indent=2).encode('utf-8')
+
+
+def test_local_get_local_path():
+    """Test get_local_path(filename) in local plugin"""
+    with patch(
+        'csp_billing_adapter_local.plugin.Path',
+        return_value=Path('/etc/')
+    ):
+        expected_path = Path('/etc/foo')
+        assert get_local_path('foo') == expected_path
 
 
 def test_local_get_cache():
@@ -428,3 +440,25 @@ def test_local_csp_usage_data_errors():
                 get_usage_data(config=local_config)
             # check request is retried 5 times
             assert mock_urlopen.call_count == 5
+
+
+@patch('csp_billing_adapter_local.plugin.logging.Logger.info')
+@patch('csp_billing_adapter_local.plugin.logging.Logger.addHandler')
+@patch('csp_billing_adapter_local.plugin.logging.FileHandler')
+def test_local_csp_setup_adapter_log_with_config_settings(
+    mock_logging_file_handler, mock_logger_add_handler,
+    mock_logging_info
+):
+    file_handler = logging.FileHandler('foo')
+    log = logging.getLogger('CSPBillingAdapter')
+    mock_logging_file_handler.return_value = file_handler
+
+    setup_adapter(config=local_config)
+
+    log.addHandler.assert_called_with(file_handler)
+    mock_logging_file_handler.assert_called_with(
+        '/var/log/csp_billing_adapter.log'
+    )
+    mock_logging_info.assert_called_with(
+        'Logger file handler set to /var/log/csp_billing_adapter.log'
+    )

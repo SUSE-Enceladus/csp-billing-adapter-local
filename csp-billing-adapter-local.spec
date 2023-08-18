@@ -19,7 +19,7 @@
 %global skip_python2 1
 %define pythons python3
 Name:           csp-billing-adapter-local
-Version:        0.0.1
+Version:        0.1.0
 Release:        0
 Summary:        Billing adapter plugin for VM offers
 License:        Apache-2.0

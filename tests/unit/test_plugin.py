@@ -51,6 +51,7 @@ from csp_billing_adapter_local.plugin import (
 
 
 
+@patch('csp_billing_adapter_local.plugin.get_local_path')
 class TestCSPBillingAdapterLocal(object):
     def setup_method(self):
         self.config_file = 'tests/data/config.yaml'
@@ -68,50 +69,39 @@ class TestCSPBillingAdapterLocal(object):
 
 
     @patch('csp_billing_adapter_local.plugin.Path', return_value=Path('/etc/'))
-    def test_local_get_local_path(self, mock_path):
+    def test_local_get_local_path(self, mock_path, mock_get_local_path):
         """Test get_local_path(filename) in local plugin"""
         expected_path = Path('/etc/foo')
         assert get_local_path('foo') == expected_path
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/good/cache.json')
-    )
     def test_local_get_cache(self, mock_get_local_path):
         """Test get_cache() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/good/cache.json')
         local_cache = get_cache(config=self.local_config)
         assert local_cache.get('adapter_start_time')
         assert local_cache.get('next_bill_time')
         assert local_cache.get('next_reporting_time')
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/bad/cache.json')
-    )
     def test_local_get_cache_json_decoder_exception(
         self, mock_get_local_path
     ):
         """Test get_cache() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/bad/cache.json')
         assert get_cache(config=self.local_config) == {}
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/bad/cache1.json')
-    )
     def test_local_get_cache_file_not_found_exception(
         self, mock_get_local_path
     ):
         """Test get_cache() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/bad/cache1.json')
         assert get_cache(config=self.local_config) == {}
 
 
-    @patch('csp_billing_adapter_local.plugin.get_local_path')
     def test_local_cache_update_merge(self, mock_get_local_path):
         """Test update_cache() with merge in local plugin"""
-
         with NamedTemporaryFile() as temp_file:
             mock_get_local_path.return_value = Path(temp_file.name)
             test_data1 = {'a': 1, 'b': 2}
@@ -141,7 +131,6 @@ class TestCSPBillingAdapterLocal(object):
             assert get_cache(config=self.local_config) == test_data3
 
 
-        @patch('csp_billing_adapter_local.plugin.get_local_path')
         def test_local_cache_update_replace(self, mock_get_local_path):
             """Test update_cache() with replace in local plugin"""
 
@@ -170,7 +159,6 @@ class TestCSPBillingAdapterLocal(object):
                 assert get_cache(config=self.local_config) == test_data2
 
 
-    @patch('csp_billing_adapter_local.plugin.get_local_path')
     def test_local_cache_save(self, mock_get_local_path):
         """Test save_cache() in local plugin"""
         with NamedTemporaryFile() as temp_file:
@@ -196,42 +184,38 @@ class TestCSPBillingAdapterLocal(object):
             assert get_cache(config=self.local_config) == test_data2
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/good/csp_config.json')
-    )
     def test_local_get_csp_config(self, mock_get_local_path):
         """Test csp_config() in local plugin"""
+        mock_get_local_path.return_value = Path(
+            'tests/data/good/csp_config.json'
+        )
         local_csp_config = get_csp_config(self.local_config)
         assert local_csp_config.get('billing_api_access_ok')
         assert local_csp_config.get('timestamp')
         assert local_csp_config.get('expire')
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/bad/csp_config.json')
-    )
     def test_local_get_csp_config_json_decoder_exception(
         self, mock_get_local_path
     ):
         """Test csp_config() in local plugin"""
+        mock_get_local_path.return_value = Path(
+            'tests/data/bad/csp_config.json'
+        )
         assert get_csp_config(self.local_config) == {}
 
 
-    @patch(
-        'csp_billing_adapter_local.plugin.get_local_path',
-        return_value=Path('tests/data/bad/csp_config1.json')
-    )
     def test_local_get_csp_config_file_not_found_exception(
         self,
         mock_get_local_path
     ):
         """Test csp_config() in local plugin"""
+        mock_get_local_path.return_value =Path(
+            'tests/data/bad/csp_config1.json'
+        )
         assert get_csp_config(self.local_config) == {}
 
 
-    @patch('csp_billing_adapter_local.plugin.get_local_path')
     def test_local_csp_config_update_merge(self, mock_get_local_path):
         """Test update_cache() with merge in local plugin"""
 
@@ -264,7 +248,6 @@ class TestCSPBillingAdapterLocal(object):
             assert get_csp_config(config=self.local_config) == test_data3
 
 
-    @patch('csp_billing_adapter_local.plugin.get_local_path')
     def test_local_csp_config_update_replace(self, mock_get_local_path):
         """Test update_cache() with replace in local plugin"""
 
@@ -293,7 +276,6 @@ class TestCSPBillingAdapterLocal(object):
             assert get_csp_config(config=self.local_config) == test_data2
 
 
-    @patch('csp_billing_adapter_local.plugin.get_local_path')
     def test_local_csp_config_save(self, mock_get_local_path):
         """Test save_cache() in local plugin"""
         with NamedTemporaryFile() as temp_file:
@@ -320,7 +302,9 @@ class TestCSPBillingAdapterLocal(object):
 
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
-    def test_local_csp_usage_data(self, mock_urlopen, mock_request):
+    def test_local_csp_usage_data(
+        self, mock_urlopen, mock_request, mock_get_local_path
+    ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             self.json_response
 
@@ -331,7 +315,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_wrong_response(
-        self, mock_urlopen, mock_request
+        self, mock_urlopen, mock_request, mock_get_local_path
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps({'foo': []}, indent=2).encode('utf-8')
@@ -342,7 +326,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_different_config_key(
-        self, mock_urlopen, mock_request
+        self, mock_urlopen, mock_request, mock_get_local_path
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps({'product_code': []}, indent=2).encode('utf-8')
@@ -353,7 +337,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_no_usage_metrics(
-        self, mock_urlopen, mock_request
+        self, mock_urlopen, mock_request, mock_get_local_path
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps({'usage_metrics': []}, indent=2).encode('utf-8')
@@ -367,7 +351,8 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_json_decode_error(
-        self, mock_urlopen, mock_request, mock_json_loads
+        self, mock_urlopen, mock_request,
+        mock_json_loads, mock_get_local_path
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps({'usage_metrics': []}, indent=2).encode('utf-8')
@@ -381,7 +366,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_config_missing_metrics(
-        self, mock_urlopen, mock_request, caplog
+        self, mock_urlopen, mock_request, mock_get_local_path, caplog
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps(self.json_data, indent=2).encode('utf-8')
@@ -404,7 +389,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_config_missing_count(
-        self, mock_urlopen, mock_request, caplog
+        self, mock_urlopen, mock_request, mock_get_local_path, caplog
     ):
         self.json_data_no_count = {
             "usage_metrics": [
@@ -423,7 +408,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_errors(
-        self, mock_urlopen, mock_request
+            self, mock_urlopen, mock_request, mock_get_local_path
     ):
         mock_urlopen.side_effect = urllib.error.URLError('Unknown host')
         with raises(CSPBillingAdapterException):
@@ -437,7 +422,7 @@ class TestCSPBillingAdapterLocal(object):
     @patch('csp_billing_adapter_local.plugin.logging.FileHandler')
     def test_local_csp_setup_adapter_log_with_config_settings(
         self, mock_logging_file_handler, mock_logger_add_handler,
-        mock_logging_info
+            mock_logging_info, mock_get_local_path
     ):
         file_handler = logging.FileHandler('foo')
         log = logging.getLogger('CSPBillingAdapter')

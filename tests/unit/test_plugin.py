@@ -68,11 +68,12 @@ class TestCSPBillingAdapterLocal(object):
         self.json_response = json.dumps(self.json_data, indent=2).encode('utf-8')
 
 
-    @patch('csp_billing_adapter_local.plugin.Path', return_value=Path('/etc/'))
+    @patch('csp_billing_adapter_local.plugin.Path', return_value=Path('foo'))
     def test_local_get_local_path(self, mock_path, mock_get_local_path):
         """Test get_local_path(filename) in local plugin"""
-        expected_path = Path('/etc/foo')
-        assert get_local_path('foo') == expected_path
+        expected_path = Path('foo/bar')
+        assert get_local_path('bar') == expected_path
+        Path('foo').rmdir()
 
 
     def test_local_get_cache(self, mock_get_local_path):

@@ -49,8 +49,6 @@ from csp_billing_adapter_local.plugin import (
 )
 
 
-
-
 @patch('csp_billing_adapter_local.plugin.get_local_path')
 class TestCSPBillingAdapterLocal(object):
     def setup_method(self):
@@ -65,8 +63,9 @@ class TestCSPBillingAdapterLocal(object):
                 {"usage_metric": "monitoring", "count": 99}
             ]
         }
-        self.json_response = json.dumps(self.json_data, indent=2).encode('utf-8')
-
+        self.json_response = json.dumps(
+            self.json_data, indent=2
+        ).encode('utf-8')
 
     @patch('csp_billing_adapter_local.plugin.Path', return_value=Path('foo'))
     def test_local_get_local_path(self, mock_path, mock_get_local_path):
@@ -74,7 +73,6 @@ class TestCSPBillingAdapterLocal(object):
         expected_path = Path('foo/bar')
         assert get_local_path('bar') == expected_path
         Path('foo').rmdir()
-
 
     def test_local_get_cache(self, mock_get_local_path):
         """Test get_cache() in local plugin"""
@@ -84,7 +82,6 @@ class TestCSPBillingAdapterLocal(object):
         assert local_cache.get('next_bill_time')
         assert local_cache.get('next_reporting_time')
 
-
     def test_local_get_cache_json_decoder_exception(
         self, mock_get_local_path
     ):
@@ -92,14 +89,12 @@ class TestCSPBillingAdapterLocal(object):
         mock_get_local_path.return_value = Path('tests/data/bad/cache.json')
         assert get_cache(config=self.local_config) == {}
 
-
     def test_local_get_cache_file_not_found_exception(
         self, mock_get_local_path
     ):
         """Test get_cache() in local plugin"""
         mock_get_local_path.return_value = Path('tests/data/bad/cache1.json')
         assert get_cache(config=self.local_config) == {}
-
 
     def test_local_cache_update_merge(self, mock_get_local_path):
         """Test update_cache() with merge in local plugin"""
@@ -131,34 +126,31 @@ class TestCSPBillingAdapterLocal(object):
             assert get_cache(config=self.local_config)['c'] == test_data2['c']
             assert get_cache(config=self.local_config) == test_data3
 
+    def test_local_cache_update_replace(self, mock_get_local_path):
+        """Test update_cache() with replace in local plugin"""
+        with NamedTemporaryFile() as temp_file:
+            mock_get_local_path.return_value = Path(temp_file.name)
+            test_data1 = {'a': 1, 'b': 2}
+            test_data2 = {'c': 3, 'd': 4}
 
-        def test_local_cache_update_replace(self, mock_get_local_path):
-            """Test update_cache() with replace in local plugin"""
+            # local cache should initially be empty
+            assert get_cache(config=self.local_config) == {}
 
-            with NamedTemporaryFile() as temp_file:
-                mock_get_local_path.return_value = Path(temp_file.name)
-                test_data1 = {'a': 1, 'b': 2}
-                test_data2 = {'c': 3, 'd': 4}
+            update_cache(
+                config=self.local_config,
+                cache=test_data1,
+                replace=False
+            )
 
-                # local cache should initially be empty
-                assert get_cache(config=self.local_config) == {}
+            assert get_cache(config=self.local_config) == test_data1
 
-                update_cache(
-                    config=self.local_config,
-                    cache=test_data1,
-                    replace=False
-                )
+            update_cache(
+                config=self.local_config,
+                cache=test_data2,
+                replace=True
+            )
 
-                assert get_cache(config=self.local_config) == test_data1
-
-                update_cache(
-                    config=self.local_config,
-                    cache=test_data2,
-                    replace=True
-                )
-
-                assert get_cache(config=self.local_config) == test_data2
-
+            assert get_cache(config=self.local_config) == test_data2
 
     def test_local_cache_save(self, mock_get_local_path):
         """Test save_cache() in local plugin"""
@@ -184,7 +176,6 @@ class TestCSPBillingAdapterLocal(object):
 
             assert get_cache(config=self.local_config) == test_data2
 
-
     def test_local_get_csp_config(self, mock_get_local_path):
         """Test csp_config() in local plugin"""
         mock_get_local_path.return_value = Path(
@@ -195,7 +186,6 @@ class TestCSPBillingAdapterLocal(object):
         assert local_csp_config.get('timestamp')
         assert local_csp_config.get('expire')
 
-
     def test_local_get_csp_config_json_decoder_exception(
         self, mock_get_local_path
     ):
@@ -205,21 +195,18 @@ class TestCSPBillingAdapterLocal(object):
         )
         assert get_csp_config(self.local_config) == {}
 
-
     def test_local_get_csp_config_file_not_found_exception(
         self,
         mock_get_local_path
     ):
         """Test csp_config() in local plugin"""
-        mock_get_local_path.return_value =Path(
+        mock_get_local_path.return_value = Path(
             'tests/data/bad/csp_config1.json'
         )
         assert get_csp_config(self.local_config) == {}
 
-
     def test_local_csp_config_update_merge(self, mock_get_local_path):
         """Test update_cache() with merge in local plugin"""
-
         with NamedTemporaryFile() as temp_file:
             mock_get_local_path.return_value = Path(temp_file.name)
             test_data1 = {'a': 1, 'b': 2}
@@ -243,11 +230,11 @@ class TestCSPBillingAdapterLocal(object):
                 replace=False
             )
 
-            assert get_csp_config(config=self.local_config)['a'] != test_data1['a']
-            assert get_csp_config(config=self.local_config)['b'] == test_data1['b']
-            assert get_csp_config(config=self.local_config)['c'] == test_data2['c']
-            assert get_csp_config(config=self.local_config) == test_data3
-
+            config_result = get_csp_config(config=self.local_config)
+            assert config_result['a'] != test_data1['a']
+            assert config_result['b'] == test_data1['b']
+            assert config_result['c'] == test_data2['c']
+            assert config_result == test_data3
 
     def test_local_csp_config_update_replace(self, mock_get_local_path):
         """Test update_cache() with replace in local plugin"""
@@ -275,7 +262,6 @@ class TestCSPBillingAdapterLocal(object):
             )
 
             assert get_csp_config(config=self.local_config) == test_data2
-
 
     def test_local_csp_config_save(self, mock_get_local_path):
         """Test save_cache() in local plugin"""
@@ -312,7 +298,6 @@ class TestCSPBillingAdapterLocal(object):
         response = get_usage_data(config=self.local_config)
         assert response == {'managed_node_count': 42, 'monitoring': 99}
 
-
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_wrong_response(
@@ -323,7 +308,6 @@ class TestCSPBillingAdapterLocal(object):
         with raises(CSPBillingAdapterException):
             get_usage_data(config=self.local_config)
 
-
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_different_config_key(
@@ -333,7 +317,6 @@ class TestCSPBillingAdapterLocal(object):
             json.dumps({'product_code': []}, indent=2).encode('utf-8')
         with raises(CSPBillingAdapterException):
             get_usage_data(config=self.local_config)
-
 
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
@@ -346,7 +329,6 @@ class TestCSPBillingAdapterLocal(object):
             self.local_config_no_metrics = dict(self.local_config)
             del self.local_config_no_metrics['usage_metrics']
             get_usage_data(config=self.local_config_no_metrics)
-
 
     @patch('csp_billing_adapter_local.plugin.json.loads')
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
@@ -362,7 +344,6 @@ class TestCSPBillingAdapterLocal(object):
         )
         with raises(CSPBillingAdapterException):
             get_usage_data(config=self.local_config)
-
 
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
@@ -386,7 +367,6 @@ class TestCSPBillingAdapterLocal(object):
                 "monitoring not in config"
             assert error_message in caplog.text
 
-
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_config_missing_count(
@@ -405,7 +385,6 @@ class TestCSPBillingAdapterLocal(object):
         error_message = 'Missing "count" info in the application API response'
         assert error_message in caplog.text
 
-
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_errors(
@@ -416,7 +395,6 @@ class TestCSPBillingAdapterLocal(object):
             get_usage_data(config=self.local_config)
             # check request is retried 5 times
             assert mock_urlopen.call_count == 5
-
 
     @patch('csp_billing_adapter_local.plugin.logging.Logger.info')
     @patch('csp_billing_adapter_local.plugin.logging.Logger.addHandler')

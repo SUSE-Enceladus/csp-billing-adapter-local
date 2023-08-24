@@ -133,6 +133,7 @@ def get_usage_data(config: Config):
     :param config: The application configuration dictionary
     :return: Return a dict with the current usage report
     """
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     usage_data = _make_request(config.get('api'))
     metrics_key = 'usage_metrics'
 
@@ -150,19 +151,13 @@ def get_usage_data(config: Config):
             'Config missing usage metrics section'
         )
 
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    result_usage_data = {'reporting_time': now}
-    extracted_usage_data = _extract_usage(
-        usage_data_items, config_usage_metrics_info
-    )
-    result_usage_data.update(extracted_usage_data)
-
-    return result_usage_data
+    return _extract_usage(usage_data_items, config_usage_metrics_info, now)
 
 
 def _extract_usage(
     api_usage_metrics: list,
-    config_usage_metrics: dict
+    config_usage_metrics: dict,
+    reporting_time
 ):
     """
     Parse the response from the application API to the expected structure.
@@ -183,6 +178,8 @@ def _extract_usage(
         message = f"Usage metric(s) {', '.join(missing_metrics)} not in config"
         log.error(message)
         raise CSPBillingAdapterException(message)
+
+    usage_metrics['reporting_time'] = reporting_time
 
     return usage_metrics
 

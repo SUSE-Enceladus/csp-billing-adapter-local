@@ -29,6 +29,9 @@ from pathlib import Path
 import csp_billing_adapter
 
 from csp_billing_adapter.config import Config
+from csp_billing_adapter.utils import (
+    get_now, date_to_string
+)
 from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
@@ -132,6 +135,7 @@ def get_usage_data(config: Config):
     :param config: The application configuration dictionary
     :return: Return a dict with the current usage report
     """
+    now = date_to_string(get_now())
     usage_data = _make_request(config.get('api'))
     metrics_key = 'usage_metrics'
 
@@ -149,12 +153,13 @@ def get_usage_data(config: Config):
             'Config missing usage metrics section'
         )
 
-    return _extract_usage(usage_data_items, config_usage_metrics_info)
+    return _extract_usage(usage_data_items, config_usage_metrics_info, now)
 
 
 def _extract_usage(
     api_usage_metrics: list,
-    config_usage_metrics: dict
+    config_usage_metrics: dict,
+    reporting_time
 ):
     """
     Parse the response from the application API to the expected structure.
@@ -175,6 +180,8 @@ def _extract_usage(
         message = f"Usage metric(s) {', '.join(missing_metrics)} not in config"
         log.error(message)
         raise CSPBillingAdapterException(message)
+
+    usage_metrics['reporting_time'] = reporting_time
 
     return usage_metrics
 

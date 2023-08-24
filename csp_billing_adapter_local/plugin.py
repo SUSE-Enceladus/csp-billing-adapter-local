@@ -18,7 +18,6 @@ plugin.py is part of csp-billing-adapter-local and provides the local storage
 plugin
 """
 
-import datetime
 import json
 import logging
 import urllib.request
@@ -30,6 +29,7 @@ from pathlib import Path
 import csp_billing_adapter
 
 from csp_billing_adapter.config import Config
+from csp_billing_adapter.utils import (get_now, date_to_string)
 from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
@@ -133,7 +133,7 @@ def get_usage_data(config: Config):
     :param config: The application configuration dictionary
     :return: Return a dict with the current usage report
     """
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    now = date_to_string(get_now())
     usage_data = _make_request(config.get('api'))
     metrics_key = 'usage_metrics'
 

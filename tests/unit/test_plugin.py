@@ -288,22 +288,22 @@ class TestCSPBillingAdapterLocal(object):
 
             assert get_csp_config(config=self.local_config) == test_data2
 
-    @patch('csp_billing_adapter_local.plugin.datetime.datetime')
+    @patch('csp_billing_adapter_local.plugin.date_to_string')
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data(
-        self, mock_urlopen, mock_request, mock_get_local_path,
-        mock_datetime
+        self, mock_urlopen, mock_request,
+        mock_date_to_string, mock_get_local_path,
+
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             self.json_response
 
-        now = datetime.datetime.now(datetime.timezone.utc)
-        mock_datetime.now.return_value = now
+        mock_date_to_string.return_value = '1992-09-02T01:02:03.123456+00:00'
 
         response = get_usage_data(config=self.local_config)
         expected_response = {
-            'reporting_time': now.isoformat(),
+            'reporting_time': '1992-09-02T01:02:03.123456+00:00',
             'managed_node_count': 42,
             'monitoring': 99
         }
@@ -378,12 +378,12 @@ class TestCSPBillingAdapterLocal(object):
                 "monitoring not in config"
             assert error_message in caplog.text
 
-    @patch('csp_billing_adapter_local.plugin.datetime.datetime')
+    @patch('csp_billing_adapter_local.plugin.date_to_string')
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_config_missing_count(
-        self, mock_urlopen, mock_request, mock_get_local_path,
-        mock_datetime, caplog
+        self, mock_urlopen, mock_request, mock_get_now,
+        mock_get_local_path, caplog
     ):
         self.json_data_no_count = {
             "usage_metrics": [
@@ -394,12 +394,12 @@ class TestCSPBillingAdapterLocal(object):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps(self.json_data_no_count, indent=2).encode('utf-8')
 
-        now = datetime.datetime.now(datetime.timezone.utc)
-        mock_datetime.now.return_value = now
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        mock_get_now.return_value = now
 
         usage_data = get_usage_data(config=self.local_config)
         expected_usage_data = {
-            'reporting_time': now.isoformat(),
+            'reporting_time': now,
             'managed_node_count': 42,
             'monitoring': 0
         }

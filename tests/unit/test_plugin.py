@@ -22,6 +22,7 @@
 test_plugin.py is part of csp-billing-adapter-local and provides units tests
 for the local plugin functions.
 """
+import datetime
 import json
 import logging
 from pathlib import Path
@@ -287,16 +288,26 @@ class TestCSPBillingAdapterLocal(object):
 
             assert get_csp_config(config=self.local_config) == test_data2
 
+    @patch('csp_billing_adapter_local.plugin.datetime.datetime')
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data(
-        self, mock_urlopen, mock_request, mock_get_local_path
+        self, mock_urlopen, mock_request, mock_get_local_path,
+        mock_datetime
     ):
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             self.json_response
 
+        now = datetime.datetime.now(datetime.timezone.utc)
+        mock_datetime.now.return_value = now
+
         response = get_usage_data(config=self.local_config)
-        assert response == {'managed_node_count': 42, 'monitoring': 99}
+        expected_response = {
+            'reporting_time': now.isoformat(),
+            'managed_node_count': 42,
+            'monitoring': 99
+        }
+        assert response == expected_response
 
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
@@ -367,10 +378,12 @@ class TestCSPBillingAdapterLocal(object):
                 "monitoring not in config"
             assert error_message in caplog.text
 
+    @patch('csp_billing_adapter_local.plugin.datetime.datetime')
     @patch('csp_billing_adapter_local.plugin.urllib.request.Request')
     @patch('csp_billing_adapter_local.plugin.urllib.request.urlopen')
     def test_local_csp_usage_data_config_missing_count(
-        self, mock_urlopen, mock_request, mock_get_local_path, caplog
+        self, mock_urlopen, mock_request, mock_get_local_path,
+        mock_datetime, caplog
     ):
         self.json_data_no_count = {
             "usage_metrics": [
@@ -380,8 +393,17 @@ class TestCSPBillingAdapterLocal(object):
         }
         mock_urlopen.return_value.__enter__.return_value.read.return_value = \
             json.dumps(self.json_data_no_count, indent=2).encode('utf-8')
+
+        now = datetime.datetime.now(datetime.timezone.utc)
+        mock_datetime.now.return_value = now
+
         usage_data = get_usage_data(config=self.local_config)
-        assert usage_data == {'managed_node_count': 42, 'monitoring': 0}
+        expected_usage_data = {
+            'reporting_time': now.isoformat(),
+            'managed_node_count': 42,
+            'monitoring': 0
+        }
+        assert usage_data == expected_usage_data
         error_message = 'Missing "count" info in the application API response'
         assert error_message in caplog.text
 

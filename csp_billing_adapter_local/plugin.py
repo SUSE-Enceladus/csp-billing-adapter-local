@@ -18,6 +18,7 @@ plugin.py is part of csp-billing-adapter-local and provides the local storage
 plugin
 """
 
+import datetime
 import json
 import logging
 import urllib.request
@@ -149,7 +150,14 @@ def get_usage_data(config: Config):
             'Config missing usage metrics section'
         )
 
-    return _extract_usage(usage_data_items, config_usage_metrics_info)
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    result_usage_data = {'reporting_time': now}
+    extracted_usage_data = _extract_usage(
+        usage_data_items, config_usage_metrics_info
+    )
+    result_usage_data.update(extracted_usage_data)
+
+    return result_usage_data
 
 
 def _extract_usage(

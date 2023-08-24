@@ -29,7 +29,9 @@ from pathlib import Path
 import csp_billing_adapter
 
 from csp_billing_adapter.config import Config
-from csp_billing_adapter.utils import (get_now, date_to_string)
+from csp_billing_adapter.utils import (
+    get_now, date_to_string
+)
 from csp_billing_adapter.exceptions import CSPBillingAdapterException
 
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'

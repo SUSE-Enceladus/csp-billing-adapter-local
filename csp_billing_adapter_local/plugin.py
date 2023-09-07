@@ -30,7 +30,8 @@ import csp_billing_adapter
 
 from csp_billing_adapter.adapter import (
     LOGGER_NAME,
-    LOGGING_FORMAT
+    LOGGING_FORMAT,
+    LOGGING_DATEFMT
 )
 from csp_billing_adapter.config import Config
 from csp_billing_adapter.utils import (
@@ -56,8 +57,10 @@ def get_local_path(filename: str):
 
 @csp_billing_adapter.hookimpl
 def setup_adapter(config: Config):
-    logging.basicConfig(datefmt='%Y-%m-%dT%H:%M:%S')
-    formatter = logging.Formatter(fmt=LOGGING_FORMAT)
+    formatter = logging.Formatter(
+        fmt=LOGGING_FORMAT,
+        datefmt=LOGGING_DATEFMT
+    )
     log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
     log_to_file.setFormatter(formatter)
     log.addHandler(log_to_file)

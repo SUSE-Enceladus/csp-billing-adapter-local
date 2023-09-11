@@ -28,6 +28,11 @@ from pathlib import Path
 
 import csp_billing_adapter
 
+from csp_billing_adapter.adapter import (
+    LOGGER_NAME,
+    LOGGING_FORMAT,
+    LOGGING_DATE_FMT
+)
 from csp_billing_adapter.config import Config
 from csp_billing_adapter.utils import (
     get_now, date_to_string
@@ -38,7 +43,6 @@ ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
 CACHE_FILE = 'cache.json'
 CSP_CONFIG_FILE = 'csp-config.json'
 CSP_LOG_FILEPATH = '/var/log/csp_billing_adapter.log'
-LOGGER_NAME = 'CSPBillingAdapter'
 
 log = logging.getLogger(LOGGER_NAME)
 
@@ -53,7 +57,12 @@ def get_local_path(filename: str):
 
 @csp_billing_adapter.hookimpl
 def setup_adapter(config: Config):
+    formatter = logging.Formatter(
+        fmt=LOGGING_FORMAT,
+        datefmt=LOGGING_DATE_FMT
+    )
     log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
+    log_to_file.setFormatter(formatter)
     log.addHandler(log_to_file)
     log.info(f'Logger file handler set to {CSP_LOG_FILEPATH}')
 

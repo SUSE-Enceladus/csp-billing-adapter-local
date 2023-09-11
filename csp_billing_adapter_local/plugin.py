@@ -31,7 +31,7 @@ import csp_billing_adapter
 from csp_billing_adapter.adapter import (
     LOGGER_NAME,
     LOGGING_FORMAT,
-    LOGGING_DATEFMT
+    LOGGING_DATE_FMT
 )
 from csp_billing_adapter.config import Config
 from csp_billing_adapter.utils import (
@@ -59,7 +59,7 @@ def get_local_path(filename: str):
 def setup_adapter(config: Config):
     formatter = logging.Formatter(
         fmt=LOGGING_FORMAT,
-        datefmt=LOGGING_DATEFMT
+        datefmt=LOGGING_DATE_FMT
     )
     log_to_file = logging.FileHandler(CSP_LOG_FILEPATH)
     log_to_file.setFormatter(formatter)

@@ -38,6 +38,7 @@ from csp_billing_adapter.utils import (
     get_now, date_to_string
 )
 from csp_billing_adapter.exceptions import CSPBillingAdapterException
+from csp_billing_adapter_local import __version__
 
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
 CACHE_FILE = 'cache.json'
@@ -220,3 +221,8 @@ def _make_request(url: str):
         raise CSPBillingAdapterException(
             f'Could not deserialized JSON from application API: {err}'
         )
+
+
+@csp_billing_adapter.hookimpl
+def get_version():
+    return ('local_plugin', __version__)

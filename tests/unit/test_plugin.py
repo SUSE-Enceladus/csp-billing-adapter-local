@@ -46,7 +46,8 @@ from csp_billing_adapter_local.plugin import (
     save_cache,
     save_csp_config,
     get_usage_data,
-    setup_adapter
+    setup_adapter,
+    get_version
 )
 
 
@@ -438,3 +439,8 @@ class TestCSPBillingAdapterLocal(object):
         mock_logging_info.assert_called_with(
             'Logger file handler set to /var/log/csp_billing_adapter.log'
         )
+
+    def test_get_version(self, mock_get_local_path):
+        version = get_version()
+        assert version[0] == 'local_plugin'
+        assert version[1]

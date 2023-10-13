@@ -83,8 +83,6 @@ def get_cache(config: Config):
     except (FileNotFoundError, JSONDecodeError):
         cache = {}
 
-    log.info("Retrieved Cache Content: %s", cache)
-
     return cache
 
 
@@ -97,8 +95,6 @@ def update_cache(config: Config, cache: dict, replace: bool):
     with open(get_local_path(CACHE_FILE), 'w', encoding='utf-8') as f:
         json.dump(cache, f)
 
-    log.info("Updated Cache Content: %s", cache)
-
 
 @csp_billing_adapter.hookimpl(trylast=True)
 def get_csp_config(config: Config):
@@ -108,8 +104,6 @@ def get_csp_config(config: Config):
             csp_config = json.load(f)
     except (FileNotFoundError, JSONDecodeError):
         csp_config = {}
-
-    log.info("Retrieved CSP Config Content: %s", csp_config)
 
     return csp_config
 
@@ -124,8 +118,6 @@ def update_csp_config(config: Config, csp_config: Config, replace: bool):
 
     with open(get_local_path(CSP_CONFIG_FILE), 'w', encoding='utf-8') as f:
         json.dump(csp_config, f)
-
-    log.info("Updated CSP Config Content: %s", csp_config)
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

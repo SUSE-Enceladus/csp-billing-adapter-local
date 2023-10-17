@@ -30,7 +30,7 @@ BuildRequires:  fdupes
 BuildRequires:  python-rpm-macros
 BuildRequires:  %{python_module setuptools}
 BuildRequires:  %{python_module pluggy}
-BuildRequires:  %{python_module csp-billing-adapter} >= 0.5.0
+BuildRequires:  %{python_module csp-billing-adapter >= 0.5.0}
 %if %{with test}
 BuildRequires:  %{python_module pytest}
 BuildRequires:  %{python_module coverage}

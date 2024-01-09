@@ -47,7 +47,9 @@ from csp_billing_adapter_local.plugin import (
     save_csp_config,
     get_usage_data,
     setup_adapter,
-    get_version
+    get_version,
+    get_metering_archive,
+    save_metering_archive
 )
 
 
@@ -444,3 +446,63 @@ class TestCSPBillingAdapterLocal(object):
         version = get_version()
         assert version[0] == 'local_plugin'
         assert version[1]
+
+    def test_local_get_metering_archive(self, mock_get_local_path):
+        """Test get_metering_archive() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/good/archive.json')
+        local_archive = get_metering_archive(config=self.local_config)
+        assert len(local_archive) == 1
+        assert local_archive[0].get('billing_time')
+        assert local_archive[0].get('billing_status')
+        assert local_archive[0].get('billed_usage')
+        assert local_archive[0].get('usage_records')
+
+    def test_local_get_metering_archive_json_decoder_exception(
+        self,
+        mock_get_local_path
+    ):
+        """Test get_metering_archive() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/bad/archive.json')
+        assert get_metering_archive(config=self.local_config) == []
+
+    def test_local_get_metering_archive_file_not_found_exception(
+        self,
+        mock_get_local_path
+    ):
+        """Test get_metering_arhive() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/bad/archive1.json')
+        assert get_metering_archive(config=self.local_config) == []
+
+    def test_local_save_metering_archive(self, mock_get_local_path):
+        """Test save_metering_archive() in local plugin"""
+
+        with NamedTemporaryFile() as temp_file:
+            mock_get_local_path.return_value = Path(temp_file.name)
+            archive = [{
+                'billing_time': '2024-02-09T18:11:59.527064+00:00',
+                'billing_status': {
+                    'tier_1': {
+                        'record_id': 'd92c6e6556b14770994f5b64ebe3d339',
+                        'status': 'succeeded'
+                    }
+                },
+                'billed_usage': {
+                    'tier_1': 10
+                },
+                'usage_records': [
+                    {
+                        'managed_node_count': 9,
+                        'reporting_time': '2024-01-09T18:11:59.527673+00:00',
+                        'base_product': 'cpe:/o:suse:product:v1.2.3'
+                    }
+                ]
+            }]
+
+            # local archive should initially be empty
+            assert get_metering_archive(config=self.local_config) == []
+
+            save_metering_archive(
+                config=self.local_config,
+                archive_data=archive
+            )
+            assert get_metering_archive(config=self.local_config) == archive

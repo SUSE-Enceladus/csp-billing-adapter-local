@@ -49,7 +49,8 @@ from csp_billing_adapter_local.plugin import (
     setup_adapter,
     get_version,
     get_metering_archive,
-    save_metering_archive
+    save_metering_archive,
+    get_archive_location
 )
 
 
@@ -506,3 +507,8 @@ class TestCSPBillingAdapterLocal(object):
                 archive_data=archive
             )
             assert get_metering_archive(config=self.local_config) == archive
+
+    def test_local_get_archive_location(self, mock_get_local_path):
+        """Test get_archive_location() in local plugin"""
+        mock_get_local_path.return_value = Path('tests/data/bad/archive1.json')
+        assert str(get_archive_location()) == 'tests/data/bad/archive1.json'

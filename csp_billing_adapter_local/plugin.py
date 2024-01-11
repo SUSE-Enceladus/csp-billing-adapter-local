@@ -117,6 +117,12 @@ def get_metering_archive(config: Config):
 
 
 @csp_billing_adapter.hookimpl(trylast=True)
+def get_archive_location():
+    """Retrieve archive file path"""
+    return get_local_path(ARCHIVE_FILE)
+
+
+@csp_billing_adapter.hookimpl(trylast=True)
 def get_csp_config(config: Config):
     """Retrieve csp_config content from local storage csp_config."""
     try:

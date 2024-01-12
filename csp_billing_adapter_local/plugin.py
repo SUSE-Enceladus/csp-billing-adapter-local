@@ -42,6 +42,7 @@ from csp_billing_adapter_local import __version__
 
 ADAPTER_DATA_DIR = '/var/lib/csp-billing-adapter'
 CACHE_FILE = 'cache.json'
+ARCHIVE_FILE = 'archive.json'
 CSP_CONFIG_FILE = 'csp-config.json'
 CSP_LOG_FILEPATH = '/var/log/csp_billing_adapter.log'
 
@@ -94,6 +95,31 @@ def update_cache(config: Config, cache: dict, replace: bool):
 
     with open(get_local_path(CACHE_FILE), 'w', encoding='utf-8') as f:
         json.dump(cache, f)
+
+
+@csp_billing_adapter.hookimpl(trylast=True)
+def save_metering_archive(config: Config, archive_data: list):
+    """Update local storage archive with new content"""
+    with open(get_local_path(ARCHIVE_FILE), 'w', encoding='utf-8') as f:
+        json.dump(archive_data, f)
+
+
+@csp_billing_adapter.hookimpl(trylast=True)
+def get_metering_archive(config: Config):
+    """Retrieve archive content from local storage"""
+    try:
+        with open(get_local_path(ARCHIVE_FILE), 'r', encoding='utf-8') as f:
+            archive = json.load(f)
+    except (FileNotFoundError, JSONDecodeError):
+        archive = []
+
+    return archive
+
+
+@csp_billing_adapter.hookimpl(trylast=True)
+def get_archive_location():
+    """Retrieve archive file path"""
+    return get_local_path(ARCHIVE_FILE)
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

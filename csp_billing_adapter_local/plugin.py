@@ -22,6 +22,7 @@ import json
 import logging
 import urllib.request
 import urllib.error
+import shutil
 
 from json.decoder import JSONDecodeError
 from pathlib import Path
@@ -100,8 +101,21 @@ def update_cache(config: Config, cache: dict, replace: bool):
 @csp_billing_adapter.hookimpl(trylast=True)
 def save_metering_archive(config: Config, archive_data: list):
     """Update local storage archive with new content"""
-    with open(get_local_path(ARCHIVE_FILE), 'w', encoding='utf-8') as f:
+    archive_path = get_local_path(ARCHIVE_FILE)
+    archive_bak = Path(str(archive_path) + '.bak')
+
+    try:
+        shutil.copy(archive_path, archive_bak)
+    except FileNotFoundError:
+        pass
+
+    with open(archive_path, 'w', encoding='utf-8') as f:
         json.dump(archive_data, f)
+
+    try:
+        archive_bak.unlink()
+    except FileNotFoundError:
+        pass
 
 
 @csp_billing_adapter.hookimpl(trylast=True)

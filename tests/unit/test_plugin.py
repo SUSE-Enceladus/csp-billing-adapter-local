@@ -26,7 +26,7 @@ import datetime
 import json
 import logging
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from unittest.mock import patch
 from pytest import raises
 
@@ -475,6 +475,42 @@ class TestCSPBillingAdapterLocal(object):
         assert get_metering_archive(config=self.local_config) == []
 
     def test_local_save_metering_archive(self, mock_get_local_path):
+        """Test save_metering_archive() in local plugin"""
+
+        with TemporaryDirectory() as temp_dir:
+            mock_get_local_path.return_value = Path(
+                temp_dir
+            ).joinpath('archive.json')
+            archive = [{
+                'billing_time': '2024-02-09T18:11:59.527064+00:00',
+                'billing_status': {
+                    'tier_1': {
+                        'record_id': 'd92c6e6556b14770994f5b64ebe3d339',
+                        'status': 'succeeded'
+                    }
+                },
+                'billed_usage': {
+                    'tier_1': 10
+                },
+                'usage_records': [
+                    {
+                        'managed_node_count': 9,
+                        'reporting_time': '2024-01-09T18:11:59.527673+00:00',
+                        'base_product': 'cpe:/o:suse:product:v1.2.3'
+                    }
+                ]
+            }]
+
+            # local archive should initially be empty
+            assert get_metering_archive(config=self.local_config) == []
+
+            save_metering_archive(
+                config=self.local_config,
+                archive_data=archive
+            )
+            assert get_metering_archive(config=self.local_config) == archive
+
+    def test_local_save_metering_archive_exists(self, mock_get_local_path):
         """Test save_metering_archive() in local plugin"""
 
         with NamedTemporaryFile() as temp_file:

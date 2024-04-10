@@ -76,7 +76,7 @@ class TestCSPBillingAdapterLocal(object):
     def test_local_get_local_path(self, mock_path, mock_get_local_path):
         """Test get_local_path(filename) in local plugin"""
         expected_path = Path('foo/bar')
-        assert get_local_path('bar') == expected_path
+        assert get_local_path('bar') == str(expected_path)
         Path('foo').rmdir()
 
     def test_local_get_cache(self, mock_get_local_path):

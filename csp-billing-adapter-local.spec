@@ -19,7 +19,7 @@
 %global skip_python2 1
 %define pythons python3
 Name:           csp-billing-adapter-local
-Version:        0.5.0
+Version:        0.5.1
 Release:        0
 Summary:        Billing adapter plugin for VM offers
 License:        Apache-2.0
@@ -30,7 +30,7 @@ BuildRequires:  fdupes
 BuildRequires:  python-rpm-macros
 BuildRequires:  %{python_module setuptools}
 BuildRequires:  %{python_module pluggy}
-BuildRequires:  %{python_module csp-billing-adapter >= 0.5.0}
+BuildRequires:  %{python_module csp-billing-adapter >= 0.5.1}
 %if %{with test}
 BuildRequires:  %{python_module pytest}
 BuildRequires:  %{python_module coverage}
@@ -38,7 +38,7 @@ BuildRequires:  %{python_module pytest-cov}
 %endif
 Requires:       python-setuptools
 Requires:       python-pluggy
-Requires:       python-csp-billing-adapter >= 0.5.0
+Requires:       python-csp-billing-adapter >= 0.5.1
 BuildArch:      noarch
 %python_subpackages
 

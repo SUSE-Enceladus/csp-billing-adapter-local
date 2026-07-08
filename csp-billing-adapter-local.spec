@@ -25,7 +25,7 @@ Summary:        Billing adapter plugin for VM offers
 License:        Apache-2.0
 Group:          Development/Languages/Python
 URL:            https://github.com/SUSE-Enceladus/%{name}
-Source:         https://files.pythonhosted.org/packages/source/c/%{name}/%{name}-%{version}.tar.gz
+Source:         https://files.pythonhosted.org/packages/source/c/%{name}/csp_billing_adapter_local-%{version}.tar.gz
 BuildRequires:  fdupes
 BuildRequires:  python-rpm-macros
 BuildRequires:  %{python_module pip}
@@ -50,7 +50,7 @@ Provides a plugin for csp-billing-adapter to handle
 storage of data using local resources.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n csp_billing_adapter_local-%{version}
 
 %build
 %pyproject_wheel
